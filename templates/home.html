@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}PoorDad - Marketplace{% endblock %}
+
+{% block content %}
+  <h1>Welcome to PoorDad</h1>
+  <p>A marketplace for South Africa.</p>
+  {% if user %}
+    <p>Hello, {{ user.name }}.</p>
+  {% else %}
+    <p><a href="/auth/register">Create an account</a> or <a href="/auth/login">login</a> to get started.</p>
+  {% endif %}
+{% endblock %}
