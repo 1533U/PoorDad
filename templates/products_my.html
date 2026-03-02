@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}My products - PoorDad{% endblock %}
+
+{% block content %}
+  <h1>My products</h1>
+  <p><a href="/products/new">Add product</a></p>
+  {% if products %}
+    <ul class="product-list">
+      {% for product in products %}
+        <li id="product-row-{{ product.id }}" class="product-row">
+          <div class="product-row-content">
+            <a href="/products/{{ product.id }}">
+              <strong>{{ product.name }}</strong> — R{{ "%.2f"|format(product.price) }}
+              <br><span class="product-meta">{{ product.description[:80] }}{% if product.description|length > 80 %}…{% endif %}</span>
+            </a>
+          </div>
+          <button
+            type="button"
+            class="btn-danger"
+            hx-delete="/products/{{ product.id }}"
+            hx-target="#product-row-{{ product.id }}"
+            hx-swap="outerHTML"
+            hx-confirm="Delete this product?"
+          >
+            Delete
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You have no products yet. <a href="/products/new">Add one</a>.</p>
+  {% endif %}
+{% endblock %}

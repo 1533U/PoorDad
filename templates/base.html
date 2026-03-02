@@ -4,80 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}PoorDad{% endblock %}</title>
-    <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        line-height: 1.6;
-        color: #1a1a1a;
-        background: #f5f5f5;
-      }
-      nav {
-        background: #fff;
-        padding: 1rem 2rem;
-        border-bottom: 1px solid #e0e0e0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      nav a {
-        color: #1a1a1a;
-        text-decoration: none;
-        margin-left: 1.5rem;
-      }
-      nav a:hover { text-decoration: underline; }
-      .brand { font-weight: 700; font-size: 1.25rem; }
-      .container {
-        max-width: 640px;
-        margin: 2rem auto;
-        padding: 0 1rem;
-      }
-      h1 { margin-bottom: 1rem; }
-      form { display: flex; flex-direction: column; gap: 0.75rem; }
-      label { font-weight: 600; }
-      input[type="text"],
-      input[type="email"],
-      input[type="password"] {
-        padding: 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 1rem;
-      }
-      button {
-        padding: 0.6rem 1.2rem;
-        background: #1a1a1a;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        font-size: 1rem;
-        cursor: pointer;
-      }
-      button:hover { background: #333; }
-      .flash {
-        padding: 0.75rem 1rem;
-        margin-bottom: 1rem;
-        border-radius: 4px;
-        background: #fef3cd;
-        border: 1px solid #ffc107;
-        color: #664d03;
-      }
-      .flash.error {
-        background: #f8d7da;
-        border-color: #f5c2c7;
-        color: #842029;
-      }
-      .flash.success {
-        background: #d1e7dd;
-        border-color: #badbcc;
-        color: #0f5132;
-      }
-    </style>
+    <link rel="stylesheet" href="/static/css/app.css" />
   </head>
   <body>
-    <nav>
-      <a href="/" class="brand">PoorDad</a>
-      <div>
+    <nav class="app-nav">
+      <a href="/" class="app-brand">PoorDad</a>
+      <a href="/products">Browse</a>
+      <a href="/cart">Cart{% if cart_count|default(0) > 0 %} ({{ cart_count }}){% endif %}</a>
+      <div class="app-nav-user">
         {% if user %}
+          <a href="/orders">My orders</a>
+          <a href="/products/my">My products</a>
+          <a href="/products/new">Add product</a>
           <span>{{ user.name }}</span>
           <a href="/auth/logout">Logout</a>
         {% else %}
@@ -86,11 +24,12 @@
         {% endif %}
       </div>
     </nav>
-    <div class="container">
+    <div class="app-container">
       {% if flash_message %}
         <div class="flash {{ flash_class or '' }}">{{ flash_message }}</div>
       {% endif %}
       {% block content %}{% endblock %}
     </div>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   </body>
 </html>

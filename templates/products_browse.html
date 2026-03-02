@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Browse products - PoorDad{% endblock %}
+
+{% block content %}
+  <h1>Browse products</h1>
+  {% if products %}
+    <ul class="product-list">
+      {% for product in products %}
+        <li class="product-card">
+          <a href="/products/{{ product.id }}">
+            <strong>{{ product.name }}</strong> — R{{ "%.2f"|format(product.price) }}
+            {% if product.seller %}
+              <span class="product-meta">by {{ product.seller.name }}</span>
+            {% endif %}
+            <br><span class="product-meta">{{ product.description[:80] }}{% if product.description|length > 80 %}…{% endif %}</span>
+          </a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No products yet. Check back later.</p>
+  {% endif %}
+{% endblock %}

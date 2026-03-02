@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Cart - PoorDad{% endblock %}
+
+{% block content %}
+  <h1>Your cart</h1>
+  {% if cart_rows %}
+    <ul class="product-list">
+      {% for row in cart_rows %}
+        <li class="product-row">
+          <div class="product-row-content">
+            <a href="/products/{{ row.product.id }}">{{ row.product.name }}</a>
+            <span class="product-meta">&times; {{ row.quantity }} — R{{ "%.2f"|format(row.line_total) }}</span>
+          </div>
+          <form method="post" action="/cart/remove/{{ row.product.id }}" class="form-inline">
+            <button type="submit" class="btn-danger">Remove</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+    <p class="product-price mt-1">Total: R{{ "%.2f"|format(total) }}</p>
+    {% if user %}
+      <form method="post" action="/cart/place-order" class="mt-1">
+        <button type="submit" class="btn">Place order</button>
+      </form>
+    {% else %}
+      <p class="mt-1 text-muted"><a href="/auth/login">Log in</a> to place an order.</p>
+    {% endif %}
+  {% else %}
+    <p>Your cart is empty. <a href="/products">Browse products</a>.</p>
+  {% endif %}
+{% endblock %}

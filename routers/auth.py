@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
+from cart_helpers import cart_count
 from database import get_session
 from models.user import User
 
@@ -21,7 +22,11 @@ def get_current_user(request: Request, session: Session = Depends(get_session)):
 
 @router.get("/register", response_class=HTMLResponse)
 def register_form(request: Request):
-    return templates.TemplateResponse(request=request, name="register.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="register.html",
+        context={"cart_count": cart_count(request)},
+    )
 
 
 @router.post("/register")
@@ -37,7 +42,11 @@ def register(
         return templates.TemplateResponse(
             request=request,
             name="register.html",
-            context={"flash_message": "Email already registered.", "flash_class": "error"},
+            context={
+                "flash_message": "Email already registered.",
+                "flash_class": "error",
+                "cart_count": cart_count(request),
+            },
         )
 
     hashed = _bcrypt.hashpw(password.encode(), _bcrypt.gensalt()).decode()
@@ -52,7 +61,11 @@ def register(
 
 @router.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
-    return templates.TemplateResponse(request=request, name="login.html")
+    return templates.TemplateResponse(
+        request=request,
+        name="login.html",
+        context={"cart_count": cart_count(request)},
+    )
 
 
 @router.post("/login")
@@ -67,7 +80,11 @@ def login(
         return templates.TemplateResponse(
             request=request,
             name="login.html",
-            context={"flash_message": "Invalid email or password.", "flash_class": "error"},
+            context={
+                "flash_message": "Invalid email or password.",
+                "flash_class": "error",
+                "cart_count": cart_count(request),
+            },
         )
 
     request.session["user_id"] = user.id

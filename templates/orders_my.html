@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}My orders - PoorDad{% endblock %}
+
+{% block content %}
+  <h1>My orders</h1>
+  {% if order_totals %}
+    <ul class="product-list">
+      {% for ot in order_totals %}
+        <li class="product-card">
+          <strong>Order #{{ ot.order.id }}</strong>
+          <span class="product-meta"> — {{ ot.order.created_at.strftime("%Y-%m-%d %H:%M") }}</span>
+          <ul class="order-items">
+            {% for item in ot.order.items %}
+              <li>
+                {% if item.product %}{{ item.product.name }}{% else %}Product #{{ item.product_id }}{% endif %}
+                × {{ item.quantity }} — R{{ "%.2f"|format(item.quantity * item.unit_price) }}
+              </li>
+            {% endfor %}
+          </ul>
+          <p class="product-meta order-total">Total: R{{ "%.2f"|format(ot.total) }}</p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You have no orders yet. <a href="/products">Browse products</a> and add to cart to place an order.</p>
+  {% endif %}
+{% endblock %}

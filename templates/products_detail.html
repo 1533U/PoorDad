@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - PoorDad{% endblock %}
+
+{% block content %}
+  <p><a href="/products" class="link-back">← Back to browse</a></p>
+  <h1>{{ product.name }}</h1>
+  <p class="product-price">R{{ "%.2f"|format(product.price) }}</p>
+  {% if product.seller %}
+    <p class="text-muted">Sold by {{ product.seller.name }}</p>
+  {% endif %}
+  <p>{{ product.description }}</p>
+  <form method="post" action="/cart/add/{{ product.id }}" class="product-actions form-row">
+    <label for="qty">Quantity</label>
+    <input type="number" id="qty" name="quantity" value="1" min="1" class="input-qty" />
+    <button type="submit" class="btn">Add to cart</button>
+  </form>
+  {% if user and user.id == product.seller_id %}
+    <form method="post" action="/products/{{ product.id }}/delete" class="product-actions" onsubmit="return confirm('Delete this product?');">
+      <button type="submit" class="btn-danger">Delete product</button>
+    </form>
+  {% endif %}
+{% endblock %}
