@@ -15,19 +15,47 @@ router = APIRouter(prefix="/products")
 templates = Jinja2Templates(directory="templates")
 
 SEARCH_QUERY_MAX_LEN = 200
-PRICE_MIN_DEFAULT = 0.0
-PRICE_MAX_CAP = 100_000_000.0  # R1m in rand
+PRICE_MAX_CAP = 100_000_000.0  # R100m in rand
+PRODUCT_NAME_MAX_LEN = 120
+PRODUCT_DESCRIPTION_MAX_LEN = 4000
+
+
+def _base_context(request: Request, user: User | None, **extra: object) -> dict[str, object]:
+    context: dict[str, object] = {"user": user, "cart_count": cart_count(request)}
+    context.update(extra)
+    return context
 
 
 def _parse_price(s: str | None) -> float | None:
     """Parse optional query param to float; empty string or None -> None."""
-    if s is None or (isinstance(s, str) and not s.strip()):
+    if s is None:
+        return None
+    s = s.strip()
+    if not s:
         return None
     try:
-        v = float(s.strip())
+        v = float(s)
         return v if 0 <= v <= PRICE_MAX_CAP else None
     except ValueError:
         return None
+
+
+def _validate_product_input(name: str, description: str, price: float) -> str | None:
+    name_clean = name.strip()
+    description_clean = description.strip()
+    if not name_clean:
+        return "Product name is required."
+    if len(name_clean) > PRODUCT_NAME_MAX_LEN:
+        return "Product name is too long."
+    if not description_clean:
+        return "Description is required."
+    if len(description_clean) > PRODUCT_DESCRIPTION_MAX_LEN:
+        return "Description is too long."
+    if price <= 0:
+        return "Price must be greater than zero."
+    if price > PRICE_MAX_CAP:
+        return "Price is too high."
+    return None
 
 
 @router.get("", response_class=HTMLResponse)
@@ -40,6 +68,7 @@ def browse_products(
     min_price: str | None = Query(None),
     max_price: str | None = Query(None),
 ):
+    q_clean = (q or "").strip()
     min_p = _parse_price(min_price)
     max_p = _parse_price(max_price)
     if min_p is not None and max_p is not None and min_p > max_p:
@@ -47,19 +76,19 @@ def browse_products(
             request=request,
             name="products_browse.html",
             status_code=422,
-            context={
-                "user": user,
-                "products": [],
-                "cart_count": cart_count(request),
-                "search_query": q or "",
-                "min_price": min_price or "",
-                "max_price": max_price or "",
-                "error": "Min price cannot be greater than max price.",
-            },
+            context=_base_context(
+                request,
+                user,
+                products=[],
+                search_query=q_clean,
+                min_price=min_price or "",
+                max_price=max_price or "",
+                error="Min price cannot be greater than max price.",
+            ),
         )
     query = select(Product).order_by(Product.created_at.desc())
-    if q and q.strip():
-        term = f"%{q.strip()}%"
+    if q_clean:
+        term = f"%{q_clean}%"
         query = query.where(
             or_(
                 Product.name.ilike(term),
@@ -76,15 +105,15 @@ def browse_products(
     return templates.TemplateResponse(
         request=request,
         name="products_browse.html",
-        context={
-            "user": user,
-            "products": products,
-            "cart_count": cart_count(request),
-            "search_query": q or "",
-            "min_price": min_price or "",
-            "max_price": max_price or "",
-            "error": None,
-        },
+        context=_base_context(
+            request,
+            user,
+            products=products,
+            search_query=q_clean,
+            min_price=min_price or "",
+            max_price=max_price or "",
+            error=None,
+        ),
     )
 
 
@@ -102,7 +131,7 @@ def my_products(
     return templates.TemplateResponse(
         request=request,
         name="products_my.html",
-        context={"user": user, "products": products, "cart_count": cart_count(request)},
+        context=_base_context(request, user, products=products),
     )
 
 
@@ -113,7 +142,7 @@ def new_product_form(request: Request, user: User | None = Depends(get_current_u
     return templates.TemplateResponse(
         request=request,
         name="products_new.html",
-        context={"user": user, "cart_count": cart_count(request)},
+        context=_base_context(request, user),
     )
 
 
@@ -130,7 +159,7 @@ def product_detail(
     return templates.TemplateResponse(
         request=request,
         name="products_detail.html",
-        context={"user": user, "product": product, "cart_count": cart_count(request)},
+        context=_base_context(request, user, product=product),
     )
 
 
@@ -145,8 +174,21 @@ def create_product(
 ):
     if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
-    price_cents = max(0, round(price * 100))
-    product = Product(name=name, description=description, price_cents=price_cents, seller_id=user.id)
+    error = _validate_product_input(name, description, price)
+    if error is not None:
+        return templates.TemplateResponse(
+            request=request,
+            name="products_new.html",
+            status_code=422,
+            context=_base_context(request, user, flash_message=error, flash_class="error"),
+        )
+    price_cents = round(price * 100)
+    product = Product(
+        name=name.strip(),
+        description=description.strip(),
+        price_cents=price_cents,
+        seller_id=user.id,
+    )
     session.add(product)
     session.commit()
     return RedirectResponse(url="/products/my", status_code=303)

@@ -13,6 +13,26 @@ from routers.auth import get_current_user
 router = APIRouter(prefix="/cart")
 templates = Jinja2Templates(directory="templates")
 
+MAX_CART_QUANTITY = 99
+
+
+def _base_context(request: Request, user: User | None, **extra: object) -> dict[str, object]:
+    context: dict[str, object] = {"user": user, "cart_count": cart_count(request)}
+    context.update(extra)
+    return context
+
+
+def _clamp_quantity(quantity: int) -> int:
+    try:
+        quantity_int = int(quantity)
+    except (TypeError, ValueError):
+        return 1
+    if quantity_int < 1:
+        return 1
+    if quantity_int > MAX_CART_QUANTITY:
+        return MAX_CART_QUANTITY
+    return quantity_int
+
 
 @router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
@@ -35,7 +55,7 @@ def cart_page(
     return templates.TemplateResponse(
         request=request,
         name="cart.html",
-        context={"user": user, "cart_rows": rows, "total_cents": total_cents, "cart_count": cart_count(request)},
+        context=_base_context(request, user, cart_rows=rows, total_cents=total_cents),
     )
 
 
@@ -46,6 +66,7 @@ def add_to_cart(
     quantity: int = Form(1),
     session: Session = Depends(get_session),
 ):
+    quantity = _clamp_quantity(quantity)
     product = session.get(Product, product_id)
     if product is None:
         return RedirectResponse(url="/products", status_code=303)
@@ -53,7 +74,7 @@ def add_to_cart(
     found = False
     for item in cart:
         if item.get("product_id") == product_id:
-            item["quantity"] = item.get("quantity", 0) + quantity
+            item["quantity"] = _clamp_quantity(item.get("quantity", 0) + quantity)
             found = True
             break
     if not found:
@@ -69,6 +90,7 @@ def update_cart_item(
     quantity: int = Form(1),
     session: Session = Depends(get_session),
 ):
+    quantity = min(quantity, MAX_CART_QUANTITY)
     product = session.get(Product, product_id)
     if product is None:
         return RedirectResponse(url="/cart", status_code=303)
@@ -114,7 +136,7 @@ def place_order(
         product = session.get(Product, entry["product_id"])
         if product is None:
             continue
-        qty = max(1, entry.get("quantity", 1))
+        qty = _clamp_quantity(entry.get("quantity", 1))
         session.add(
             OrderItem(
                 order_id=order.id,

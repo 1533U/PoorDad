@@ -14,18 +14,18 @@ os.environ["SQL_ECHO"] = "false"
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from database import create_db_and_tables, engine
 from main import app
-from models.product import Product
-from models.user import User
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def db_schema():
-    """Create tables once per test module. Remove test DB file so we start clean."""
+    """Create a fresh DB per test to avoid stale pooled connections."""
+    engine.dispose()
     if os.path.exists(_test_db):
         os.remove(_test_db)
     create_db_and_tables()
     yield
+    engine.dispose()
     if os.path.exists(_test_db):
         os.remove(_test_db)
 

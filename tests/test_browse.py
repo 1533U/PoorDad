@@ -1,19 +1,15 @@
 """Tests for browse products: search (q) and price filter (min_price, max_price)."""
 import pytest
+from uuid import uuid4
 
 from models.product import Product
 from models.user import User
 from sqlmodel import Session, select
 
-_seller_counter = 0
-
-
 @pytest.fixture
 def seller(session: Session):
     """One user to use as product seller; unique email per test to avoid UNIQUE constraint."""
-    global _seller_counter
-    _seller_counter += 1
-    u = User(name="Test Seller", email=f"seller{_seller_counter}@test.example", password_hash="fake")
+    u = User(name="Test Seller", email=f"seller-{uuid4().hex}@test.example", password_hash="fake")
     session.add(u)
     session.commit()
     session.refresh(u)

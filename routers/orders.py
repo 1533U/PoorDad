@@ -13,6 +13,12 @@ router = APIRouter(prefix="/orders")
 templates = Jinja2Templates(directory="templates")
 
 
+def _base_context(request: Request, user: User | None, **extra: object) -> dict[str, object]:
+    context: dict[str, object] = {"user": user, "cart_count": cart_count(request)}
+    context.update(extra)
+    return context
+
+
 @router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
 @router.get("/my", response_class=HTMLResponse)
@@ -33,5 +39,5 @@ def my_orders(
     return templates.TemplateResponse(
         request=request,
         name="orders_my.html",
-        context={"user": user, "order_totals": order_totals, "cart_count": cart_count(request)},
+        context=_base_context(request, user, order_totals=order_totals),
     )
