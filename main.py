@@ -6,22 +6,20 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from database import create_db_and_tables
 from models.order import Order, OrderItem  # noqa: F401 — imported so SQLModel registers tables
 from models.product import Product  # noqa: F401 — imported so SQLModel registers the table
 from models.user import User  # noqa: F401 — imported so SQLModel registers the table
 from cart_helpers import cart_count
+from config import SECRET_KEY
 from routers.auth import get_current_user, router as auth_router
 from routers.cart import router as cart_router
 from routers.orders import router as orders_router
 from routers.products import router as products_router
 
-SECRET_KEY = "change-me-before-deploying"
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_db_and_tables()
+    # Schema is managed by Alembic. Run: alembic upgrade head
     yield
 
 

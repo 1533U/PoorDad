@@ -14,11 +14,11 @@
             {% for item in ot.order.items %}
               <li>
                 {% if item.product %}{{ item.product.name }}{% else %}Product #{{ item.product_id }}{% endif %}
-                × {{ item.quantity }} — R{{ "%.2f"|format(item.quantity * item.unit_price) }}
+                × {{ item.quantity }} — R{{ "%.2f"|format(item.quantity * item.unit_price_cents / 100) }}
               </li>
             {% endfor %}
           </ul>
-          <p class="product-meta order-total">Total: R{{ "%.2f"|format(ot.total) }}</p>
+          <p class="product-meta order-total">Total: R{{ "%.2f"|format(ot.total_cents / 100) }}</p>
         </li>
       {% endfor %}
     </ul>

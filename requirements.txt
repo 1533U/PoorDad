@@ -5,3 +5,7 @@ sqlmodel
 bcrypt
 python-multipart
 itsdangerous
+python-dotenv
+alembic
+pytest
+httpx

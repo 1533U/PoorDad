@@ -25,7 +25,7 @@ def register_form(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="register.html",
-        context={"cart_count": cart_count(request)},
+        context={"user": None, "cart_count": cart_count(request)},
     )
 
 
@@ -43,6 +43,7 @@ def register(
             request=request,
             name="register.html",
             context={
+                "user": None,
                 "flash_message": "Email already registered.",
                 "flash_class": "error",
                 "cart_count": cart_count(request),
@@ -64,7 +65,7 @@ def login_form(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="login.html",
-        context={"cart_count": cart_count(request)},
+        context={"user": None, "cart_count": cart_count(request)},
     )
 
 
@@ -81,6 +82,7 @@ def login(
             request=request,
             name="login.html",
             context={
+                "user": None,
                 "flash_message": "Invalid email or password.",
                 "flash_class": "error",
                 "cart_count": cart_count(request),

@@ -11,7 +11,7 @@
         <li id="product-row-{{ product.id }}" class="product-row">
           <div class="product-row-content">
             <a href="/products/{{ product.id }}">
-              <strong>{{ product.name }}</strong> — R{{ "%.2f"|format(product.price) }}
+              <strong>{{ product.name }}</strong> — R{{ "%.2f"|format(product.price_cents / 100) }}
               <br><span class="product-meta">{{ product.description[:80] }}{% if product.description|length > 80 %}…{% endif %}</span>
             </a>
           </div>

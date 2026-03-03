@@ -24,6 +24,6 @@ class OrderItem(SQLModel, table=True):
     order_id: int = Field(foreign_key="orders.id")
     product_id: int = Field(foreign_key="product.id")
     quantity: int = Field(ge=1)
-    unit_price: float = Field(ge=0)
+    unit_price_cents: int = Field(ge=0)  # ZAR cents at time of order
     order: Optional[Order] = Relationship(back_populates="items")
     product: Optional[Product] = Relationship()

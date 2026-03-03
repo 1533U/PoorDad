@@ -4,12 +4,26 @@
 
 {% block content %}
   <h1>Browse products</h1>
+  <form method="get" action="/products" class="product-filters product-filters--compact">
+    <label for="q" class="sr-only">Search</label>
+    <input type="search" id="q" name="q" value="{{ search_query }}" placeholder="Search name or description…" maxlength="200" class="product-filters__search" />
+    <label for="min_price" class="sr-only">Min price (R)</label>
+    <input type="number" id="min_price" name="min_price" value="{{ min_price }}" min="0" step="0.01" placeholder="Min R" class="product-filters__price" />
+    <label for="max_price" class="sr-only">Max price (R)</label>
+    <input type="number" id="max_price" name="max_price" value="{{ max_price }}" min="0" step="0.01" placeholder="Max R" class="product-filters__price" />
+    <button type="submit" class="btn btn-sm">Search</button>
+  </form>
+  {% if error %}
+    <p class="flash error">{{ error }}</p>
+  {% endif %}
+  <section class="browse-results" aria-label="Results">
+    <h2 class="browse-results__title">{% if products %}{{ products|length }} product{{ 's' if products|length != 1 else '' }}{% else %}No products{% endif %}</h2>
   {% if products %}
     <ul class="product-list">
       {% for product in products %}
         <li class="product-card">
           <a href="/products/{{ product.id }}">
-            <strong>{{ product.name }}</strong> — R{{ "%.2f"|format(product.price) }}
+            <strong>{{ product.name }}</strong> — R{{ "%.2f"|format(product.price_cents / 100) }}
             {% if product.seller %}
               <span class="product-meta">by {{ product.seller.name }}</span>
             {% endif %}
@@ -19,6 +33,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p>No products yet. Check back later.</p>
+    <p class="text-muted">No products match. Try different search or filters.</p>
   {% endif %}
+  </section>
 {% endblock %}

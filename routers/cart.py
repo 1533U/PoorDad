@@ -23,19 +23,19 @@ def cart_page(
 ):
     cart = get_cart(request)
     rows = []
-    total = 0.0
+    total_cents = 0
     for entry in cart:
         product = session.get(Product, entry["product_id"])
         if product is None:
             continue
         qty = entry.get("quantity", 1)
-        line = qty * product.price
-        total += line
-        rows.append({"product": product, "quantity": qty, "line_total": line})
+        line_cents = qty * product.price_cents
+        total_cents += line_cents
+        rows.append({"product": product, "quantity": qty, "line_total_cents": line_cents})
     return templates.TemplateResponse(
         request=request,
         name="cart.html",
-        context={"user": user, "cart_rows": rows, "total": total, "cart_count": cart_count(request)},
+        context={"user": user, "cart_rows": rows, "total_cents": total_cents, "cart_count": cart_count(request)},
     )
 
 
@@ -120,7 +120,7 @@ def place_order(
                 order_id=order.id,
                 product_id=product.id,
                 quantity=qty,
-                unit_price=product.price,
+                unit_price_cents=product.price_cents,
             )
         )
     session.commit()

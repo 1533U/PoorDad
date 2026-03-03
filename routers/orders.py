@@ -28,8 +28,8 @@ def my_orders(
     ).all()
     order_totals = []
     for order in orders:
-        total = sum(item.quantity * item.unit_price for item in order.items)
-        order_totals.append({"order": order, "total": total})
+        total_cents = sum(item.quantity * item.unit_price_cents for item in order.items)
+        order_totals.append({"order": order, "total_cents": total_cents})
     return templates.TemplateResponse(
         request=request,
         name="orders_my.html",

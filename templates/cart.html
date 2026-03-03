@@ -10,7 +10,7 @@
         <li class="product-row">
           <div class="product-row-content">
             <a href="/products/{{ row.product.id }}">{{ row.product.name }}</a>
-            <span class="product-meta">&times; {{ row.quantity }} — R{{ "%.2f"|format(row.line_total) }}</span>
+            <span class="product-meta">&times; {{ row.quantity }} — R{{ "%.2f"|format(row.line_total_cents / 100) }}</span>
           </div>
           <form method="post" action="/cart/remove/{{ row.product.id }}" class="form-inline">
             <button type="submit" class="btn-danger">Remove</button>
@@ -18,7 +18,7 @@
         </li>
       {% endfor %}
     </ul>
-    <p class="product-price mt-1">Total: R{{ "%.2f"|format(total) }}</p>
+    <p class="product-price mt-1">Total: R{{ "%.2f"|format(total_cents / 100) }}</p>
     {% if user %}
       <form method="post" action="/cart/place-order" class="mt-1">
         <button type="submit" class="btn">Place order</button>

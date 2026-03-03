@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, Session, create_engine
 
-DATABASE_URL = "sqlite:///poordad.db"
+from config import DATABASE_URL, SQL_ECHO
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=SQL_ECHO)
 
 
 def create_db_and_tables():

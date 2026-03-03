@@ -238,6 +238,47 @@ h1 {
   color: var(--color-flash-success-text);
 }
 
+/* Browse: compact search + filters row */
+.product-filters--compact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+}
+.product-filters--compact .product-filters__search {
+  flex: 1 1 12rem;
+  min-width: 10rem;
+  max-width: 20rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.product-filters--compact .product-filters__price {
+  width: 5rem;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.product-filters--compact .product-filters__price::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Browse: results section below search */
+.browse-results {
+  margin-top: var(--spacing-md);
+}
+.browse-results__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-md);
+}
+
 /* Product list (browse + my products) */
 .product-list {
   list-style: none;
