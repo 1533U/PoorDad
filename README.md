@@ -122,6 +122,9 @@ tests/
   test_images.py        Images: create with URL, validation, detail render + empty state
   test_validation.py    Auth + product input validation, cart quantity clamping
   test_checkout_flow.py Cart → order checkout flow and login requirement
+  test_authorization.py Authorization matrix + negative cases (maps to user stories)
+docs/
+  user-stories.md       User stories + acceptance criteria, mapped to tests
 requirements.txt        Python dependencies
 ```
 
@@ -202,14 +205,16 @@ The project is in a strong MVP state and runs end-to-end:
 - Session cart with add/update/remove and quantity clamping.
 - Checkout flow (cart → order + order items; no payment gateway) and "My orders".
 - Input validation on auth and product creation paths.
+- Authorization enforced: only owners delete their listings; orders are private to the buyer; seller-only pages require sign-in.
 - Alembic migrations managing schema.
-- Tests for browse, validation, pagination, tags, images, and checkout flow (24 passing).
+- Behaviour captured as [user stories](docs/user-stories.md), each mapped to tests.
+- Tests for browse, validation, pagination, tags, images, authorization, and checkout flow (35 passing).
 
 Latest local test run:
 
 ```bash
 .venv/bin/pytest tests/ -q
-# 24 passed
+# 35 passed
 ```
 
 ## Remaining work (real technical debt)
@@ -218,11 +223,7 @@ Latest local test run:
    Browse is paginated; the orders page still loads the full result set.
 2. **Cart persistence model**
    Session cart is acceptable for MVP, but DB-backed carts improve resilience.
-3. **Authorization and edge cases**
-   Continue tightening route-level checks and user-facing error paths.
-4. **Test depth**
-   Good start, but still light on negative cases and authorization matrix tests.
-5. **UI polish**
+3. **UI polish**
    Styling framework exists, but responsive/mobile and visual polish need iteration.
 
 > Note: product images use a remote `image_url` (no upload/storage). File uploads remain out of scope for the MVP.
@@ -231,10 +232,10 @@ Latest local test run:
 
 Do these in order to keep scope controlled:
 
-1. **Authorization/test pass first**  
-   Add focused tests for "who can do what" and invalid input scenarios.
-2. **Orders pagination second**  
+1. **Orders pagination first**  
    Apply the same `page` pattern from browse to the orders list.
+2. **DB-backed cart second**  
+   Persist the cart in the database so it survives across sessions/devices.
 
 ## Scope guardrails (important)
 
