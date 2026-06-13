@@ -124,7 +124,7 @@ def place_order(
     session: Session = Depends(get_session),
 ):
     if user is None:
-        return RedirectResponse(url="/auth/login?next=/cart", status_code=303)
+        return RedirectResponse(url="/auth/login", status_code=303)
     cart = get_cart(request)
     if not cart:
         return RedirectResponse(url="/cart", status_code=303)

@@ -1,0 +1,34 @@
+---
+description: Project working agreement — keep the marketplace lean and the docs honest
+alwaysApply: true
+---
+
+# Keep it clean (less is more)
+
+PoorDad is a small, solo-MVP marketplace. The standing plan is to stay lean: prefer
+removing the unnecessary over adding. Every change should leave the repo cleaner.
+
+## Always
+
+- **Less code is more.** Before adding, ask if existing code can be simplified or deleted instead.
+- **No dead code.** No unused params, routes, fields, helpers, or imports. If it isn't wired up and used, remove it (or it isn't done yet — finish it or revert it).
+- **No half-built features on `main`.** A feature is the slice end-to-end: backend + UI + test. If you can't finish the slice, revert the partial work.
+- **No artifacts in git.** Never commit databases, `*.db` / `*.db.bak`, caches, or `.env`. Check `git status` before committing.
+- **Tests stay green.** Run `.venv/bin/pytest tests/ -q` before finishing; never leave them broken.
+- **README is a live status board.** After any user-facing or structural change, update `README.md` so "Current status" and "Remaining work" match the code.
+
+## Respect scope guardrails
+
+Deferred by design (do not add without explicit approval): payments, OAuth, multi-vendor
+payouts, advanced search/recommendations, hosting/ops. See `README.md` → Scope guardrails.
+
+## Example
+
+```python
+# BAD: route alias nothing links to, and a query param the handler ignores
+@router.get("/my")          # dead alias
+RedirectResponse("/auth/login?next=/cart")  # login never reads ?next
+
+# GOOD: only what's wired up and used
+RedirectResponse("/auth/login")
+```

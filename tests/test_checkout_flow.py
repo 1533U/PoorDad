@@ -27,7 +27,7 @@ def test_place_order_requires_login(client, session: Session):
 
     place_response = client.post("/cart/place-order", follow_redirects=False)
     assert place_response.status_code == 303
-    assert place_response.headers["location"] == "/auth/login?next=/cart"
+    assert place_response.headers["location"] == "/auth/login"
 
 
 def test_checkout_flow_places_order_and_clears_cart(client, session: Session):

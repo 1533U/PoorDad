@@ -21,7 +21,6 @@ def _base_context(request: Request, user: User | None, **extra: object) -> dict[
 
 @router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
-@router.get("/my", response_class=HTMLResponse)
 def my_orders(
     request: Request,
     user: User | None = Depends(get_current_user),

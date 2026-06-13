@@ -17,6 +17,10 @@ PoorDad is a database-centric web app aiming to be a simple marketplace where bu
 
 Payments, OAuth sign-in, multi-vendor payouts, advanced search/recommendations, and hosting/ops optimization. See [Scope guardrails](#scope-guardrails-important) for the full defer list.
 
+### Working agreement (keep it clean)
+
+The standing plan is **less is more**: favor removing the unnecessary over adding. No dead code, no half-built features on `main`, no build artifacts (DBs, caches, `.env`) in git, tests stay green, and this README stays in sync with the code after every change. These rules are enforced for the AI agent in `.cursor/rules/keep-it-clean.mdc`.
+
 ## Tech stack
 
 | Layer | Choice |
@@ -135,7 +139,7 @@ Go through each file at your own pace. This section explains what exists and why
 ### 3. Models
 
 - **User:** `id`, `email` (unique, indexed), `name`, `password_hash`, `created_at`.
-- **Product:** `id`, `name`, `description`, `price_cents` (ZAR cents as int), `image_url`, `seller_id` -> User, `created_at`. Uses `Relationship()` to load seller.
+- **Product:** `id`, `name`, `description`, `price_cents` (ZAR cents as int), `image_url`, `seller_id` -> User, `created_at`. Uses `Relationship()` to load seller. `image_url` is an **intentional inert placeholder** — the column exists, but there is no upload/render UI yet (see Remaining work).
 - **Order + OrderItem:** Order has `buyer_id` -> User. OrderItem has `order_id`, `product_id`, `quantity`, `unit_price_cents` (cents at time of purchase). One-to-many relationship via `back_populates`.
 
 ### 4. `routers/auth.py`
