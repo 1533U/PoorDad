@@ -6,6 +6,17 @@ A small marketplace (Etsy / Moksi-style) for South Africa.
 
 PoorDad is a database-centric web app aiming to be a simple marketplace where buyers can browse and purchase and sellers can list products. The focus is South African use, inspired by platforms like Moksi. The project is scoped as a solo MVP: core marketplace features first, with room to grow (payments, search, reviews) later.
 
+### MVP definition (v1)
+
+- Any registered user can buy **and** sell — no separate seller role or onboarding.
+- Browse, search, and filter products; manage your own listings.
+- Session cart → checkout creates an **order record only** (payment arranged offline for now).
+- Buyers see order history; sellers see their listings.
+
+### Non-goals (for now)
+
+Payments, OAuth sign-in, multi-vendor payouts, advanced search/recommendations, and hosting/ops optimization. See [Scope guardrails](#scope-guardrails-important) for the full defer list.
+
 ## Tech stack
 
 | Layer | Choice |
@@ -144,7 +155,7 @@ Go through each file at your own pace. This section explains what exists and why
 ### 6. `routers/cart.py`
 
 - Cart stored in session cookie (no DB table).
-- View cart, add/remove items, place order (converts cart -> Order + OrderItems in DB).
+- View cart, add/remove items, place order (converts cart → Order + OrderItems in DB; payment is offline/out of scope for v1).
 
 ### 7. `routers/orders.py`
 
@@ -168,35 +179,70 @@ Go through each file at your own pace. This section explains what exists and why
 
 ---
 
-## Done
+## Current status (Jun 2026)
 
-| Area | What's in place |
-|------|------------------|
-| **Auth** | Register, login, logout; session cookie; `get_current_user` |
-| **Users** | User model; bcrypt password hashing |
-| **Products** | Product model (seller relationship, price in cents); full CRUD |
-| **Browse** | Search by name/description; filter by min/max price; validation; tests |
-| **Detail** | Product page with add-to-cart and owner-only delete |
-| **HTMX** | Delete product row without full page reload |
-| **Styling** | Centralized CSS with design tokens and component classes |
-| **Cart** | Session-based; add/remove; cart count in nav |
-| **Orders** | Place order (cart -> DB); "My orders" page |
-| **Config** | `SECRET_KEY`, `DATABASE_URL`, `SQL_ECHO` from `.env` via `config.py` |
-| **Migrations** | Alembic set up; initial schema + price-to-cents migration |
-| **Tests** | pytest + TestClient; 6 browse tests (search, price filter, validation) |
+The project is in a strong MVP state and runs end-to-end:
 
-## Still needs work (technical debt)
+- User registration/login/logout with session auth.
+- Product browse/create/detail/delete.
+- Search + min/max price filtering on browse.
+- Session cart with add/update/remove and quantity clamping.
+- Checkout flow (cart → order + order items; no payment gateway) and "My orders".
+- Input validation on auth and product creation paths.
+- Alembic migrations managing schema.
+- Tests for browse, validation, and checkout flow (13 passing).
 
-1. **Input validation** — Most POST routes (register, login, add product) accept anything. Add server-side checks (e.g. non-empty name, positive price, email format) with clear error messages.
-2. **No pagination** — Browse loads all products into memory. Add limit/offset as data grows.
-3. **Session-only cart** — Cart lives in the cookie; clearing cookies loses it. Consider DB-backed carts for logged-in users.
-4. **Styling needs design work** — CSS structure is solid but the visual design is rough: spacing, typography, colour contrast, responsive/mobile layout all need attention.
-5. **More tests** — Only browse is tested. Auth, cart, orders, and product CRUD need coverage.
+Latest local test run:
 
-## Next session — pick up here
+```bash
+.venv/bin/pytest tests/ -q
+# 13 passed
+```
 
-1. **Tag system** — `Tag` model + `product_tag` link table; assign tags when creating products; filter browse by tag (search and price filter already work).
-2. **Product images** — upload or URL; show thumbnail on browse and detail.
-3. **Pagination** — paginate browse and order lists.
-4. **Validation + more tests** — add validation to remaining POST routes; add tests for auth, cart, orders.
-5. **Later** — Real payments (e.g. PayFast), Google sign-in, hosting.
+## Remaining work (real technical debt)
+
+1. **Pagination**
+   Browse and orders pages still load full result sets.
+2. **Tagging/filter UX**
+   No tag/category model yet.
+3. **Image URL UX**
+   `image_url` exists on Product, but needs validation, thumbnail rendering, and empty-state handling (uploads/storage deferred).
+4. **Cart persistence model**
+   Session cart is acceptable for MVP, but DB-backed carts improve resilience.
+5. **Authorization and edge cases**
+   Continue tightening route-level checks and user-facing error paths.
+6. **Test depth**
+   Good start, but still light on negative cases and authorization matrix tests.
+7. **UI polish**
+   Styling framework exists, but responsive/mobile and visual polish need iteration.
+
+## Suggested next milestones (small and learnable)
+
+Do these in order to keep scope controlled:
+
+1. **Pagination first**  
+   Add `page` + `page_size` on browse (then orders). This teaches query shaping and UI state.
+2. **Tag model second**  
+   Add `Tag` and product-tag link table, then filter by tag in browse.
+3. **Image URL UX third**  
+   Validate existing `image_url` field, render thumbnails, handle missing images.
+4. **Authorization/test pass fourth**  
+   Add focused tests for "who can do what" and invalid input scenarios.
+
+## Scope guardrails (important)
+
+Same boundaries as [Non-goals](#non-goals-for-now) — repeated here as a planning reminder. Explicitly defer:
+
+- Payments (PayFast, Yoco, etc.)
+- OAuth / Google sign-in
+- Multi-vendor payouts
+- Advanced search / recommendations
+- Hosting / ops optimization
+
+Those are post-MVP concerns. Keep this repo as a learning marketplace core.
+
+## If you are using this as a learning project
+
+- Prefer one small vertical slice per session (feature + test + doc update).
+- Avoid adding new systems until current features are understandable.
+- Treat README as a live status board: update it after each feature.
