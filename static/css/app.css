@@ -1,6 +1,6 @@
 /* ==========================================================================
    PoorDad — single source of truth for app styling.
-   Change variables below to retheme the whole app.
+   Retheme: edit :root variables only; components reference tokens below.
    ========================================================================== */
 
 :root {
@@ -12,6 +12,8 @@
   --color-border: #e5e2dd;
   --color-primary: #1a6b4f;
   --color-primary-hover: #145c44;
+  --color-primary-ring: rgba(26, 107, 79, 0.12);
+  --color-on-solid: #fff;
   --color-danger: #c23d3d;
   --color-danger-hover: #a03333;
   /* Flash */
@@ -38,6 +40,10 @@
   --font-size-lg: 1.25rem;
   --font-size-brand: 1.25rem;
   --line-height: 1.6;
+  /* Layout */
+  --layout-max-width: 640px;
+  --layout-gutter: var(--spacing-lg);
+  --breakpoint-sm: 36rem;
   /* Borders & shadow */
   --radius: 8px;
   --radius-sm: 6px;
@@ -76,31 +82,43 @@ a:hover {
 
 /* Layout */
 .app-container {
-  max-width: 640px;
+  max-width: var(--layout-max-width);
   margin: var(--spacing-2xl) auto;
-  padding: 0 var(--spacing-lg);
+  padding: 0 var(--layout-gutter);
 }
 
 /* Nav */
 .app-nav {
   background: var(--color-surface);
-  padding: var(--spacing-lg) var(--spacing-2xl);
+  padding: var(--spacing-md) var(--layout-gutter);
   border-bottom: var(--border);
   box-shadow: var(--shadow-sm);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: var(--spacing-md) var(--spacing-xl);
+}
+
+.app-nav__brand {
+  flex: 1 1 auto;
+}
+
+.app-nav__links,
+.app-nav__account {
+  display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-md);
+  align-items: center;
+  gap: var(--spacing-md) var(--spacing-lg);
 }
 
 .app-nav a {
-  margin-left: var(--spacing-xl);
   font-weight: 500;
+  text-decoration: none;
 }
 
-.app-nav a:first-of-type {
-  margin-left: 0;
+.app-nav a:hover {
+  text-decoration: underline;
 }
 
 .app-brand {
@@ -109,10 +127,22 @@ a:hover {
   letter-spacing: -0.02em;
 }
 
-.app-nav-user {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
+.app-nav__name {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 36rem) {
+  .app-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-nav__links,
+  .app-nav__account {
+    padding-top: var(--spacing-sm);
+    border-top: var(--border);
+  }
 }
 
 /* Headings */
@@ -152,7 +182,7 @@ h1 {
 .app-form textarea:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(26, 107, 79, 0.12);
+  box-shadow: 0 0 0 3px var(--color-primary-ring);
 }
 
 .app-form textarea {
@@ -164,7 +194,7 @@ h1 {
 .btn {
   padding: 0.65rem var(--spacing-xl);
   background: var(--color-primary);
-  color: var(--color-surface);
+  color: var(--color-on-solid);
   border: none;
   border-radius: var(--radius-sm);
   font-size: var(--font-size-base);
@@ -187,7 +217,7 @@ h1 {
   font-size: var(--font-size-sm);
   font-weight: 500;
   background: var(--color-danger);
-  color: var(--color-surface);
+  color: var(--color-on-solid);
   border: none;
   border-radius: var(--radius-sm);
   font-family: inherit;
@@ -462,4 +492,8 @@ a.tag-chip:hover {
 .link-back {
   display: inline-block;
   margin-bottom: var(--spacing-lg);
+}
+
+.link-clear {
+  font-size: var(--font-size-sm);
 }

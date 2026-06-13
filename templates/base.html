@@ -7,16 +7,20 @@
     <link rel="stylesheet" href="/static/css/app.css" />
   </head>
   <body>
-    <nav class="app-nav">
-      <a href="/" class="app-brand">PoorDad</a>
-      <a href="/products">Browse</a>
-      <a href="/cart">Cart{% if cart_count|default(0) > 0 %} ({{ cart_count }}){% endif %}</a>
-      <div class="app-nav-user">
+    <nav class="app-nav" aria-label="Main">
+      <div class="app-nav__brand">
+        <a href="/" class="app-brand">PoorDad</a>
+      </div>
+      <div class="app-nav__links">
+        <a href="/products">Browse</a>
+        <a href="/cart">Cart{% if cart_count|default(0) > 0 %} ({{ cart_count }}){% endif %}</a>
+      </div>
+      <div class="app-nav__account">
         {% if user %}
           <a href="/orders">My orders</a>
           <a href="/products/my">My products</a>
           <a href="/products/new">Add product</a>
-          <span>{{ user.name }}</span>
+          <span class="app-nav__name">{{ user.name }}</span>
           <a href="/auth/logout">Logout</a>
         {% else %}
           <a href="/auth/login">Login</a>

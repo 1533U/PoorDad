@@ -207,6 +207,7 @@ The project is in a strong MVP state and runs end-to-end:
 - Tags: products carry many-to-many tags (entered comma-separated on create, normalized + deduped); browse filters by tag via clickable chips.
 - Product images: optional `image_url` (validated http/https) with thumbnails on browse, a full image on detail, and a "No image" empty state.
 - DB-backed cart for signed-in users (survives logout/login); guests keep a session cart until they sign in.
+- UI: CSS-variable theme in `static/css/app.css`; responsive nav with grouped links (mobile stacks without JS).
 - Checkout flow (cart → order + order items; no payment gateway) and "My orders" (paginated at 12 per page).
 - Input validation on auth and product creation paths.
 - Authorization enforced: only owners delete their listings; orders are private to the buyer; seller-only pages require sign-in.
@@ -223,14 +224,15 @@ Latest local test run:
 
 ## Remaining work (real technical debt)
 
-1. **UI polish**
-   Styling framework exists, but responsive/mobile and visual polish need iteration.
+1. **UI polish** (bite-sized; theme lives in `static/css/app.css` `:root`)
+   - Done: responsive nav, layout/theme tokens (`--layout-max-width`, `--color-primary-ring`, etc.)
+   - Next: shared `.field` input class (dedupe filter/qty/form styles), product-row mobile tweaks
 
 > Note: product images use a remote `image_url` (no upload/storage). File uploads remain out of scope for the MVP.
 
 ## Suggested next milestones (small and learnable)
 
-1. **UI polish** — responsive layout, mobile nav, and visual refinement in `static/css/app.css`.
+1. **UI polish (continued)** — shared form field class, then card/row spacing on small screens.
 
 ## Scope guardrails (important)
 
