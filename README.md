@@ -224,15 +224,19 @@ Latest local test run:
 
 ## Remaining work (real technical debt)
 
-1. **UI polish** (bite-sized; theme lives in `static/css/app.css` `:root`)
-   - Done: responsive nav, layout/theme tokens (`--layout-max-width`, `--color-primary-ring`, etc.), shared `.field` input class (one base for forms, filters, and qty)
-   - Next: product-row mobile stacking (cart + my-products rows on narrow screens)
+The original MVP debt list (orders pagination, DB-backed cart, UI polish) is cleared. The
+UI is now consistent and responsive: a single CSS-variable theme in `static/css/app.css`
+`:root`, a responsive nav, a shared `.field` input class, and product rows that stack on
+narrow screens. Further polish should be driven by real usage, not added speculatively.
 
 > Note: product images use a remote `image_url` (no upload/storage). File uploads remain out of scope for the MVP.
 
 ## Suggested next milestones (small and learnable)
 
-1. **UI polish (continued)** — product-row stacking on small screens.
+No urgent debt remains. Good next slices, only when there's a real need:
+
+- **Dark theme** — add a `[data-theme="dark"]` block overriding the `:root` tokens (no component changes needed).
+- **Order detail page** — a per-order view if buyers want a permalink/receipt.
 
 ## Scope guardrails (important)
 
