@@ -317,6 +317,34 @@ a.tag-chip:hover {
   margin-bottom: var(--spacing-md);
 }
 
+/* Product images */
+.product-image {
+  display: block;
+  width: 100%;
+  max-width: 28rem;
+  height: auto;
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  margin: var(--spacing-md) 0;
+}
+.product-image--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  font-size: var(--font-size-sm);
+}
+.product-thumb {
+  float: right;
+  width: 4rem;
+  height: 4rem;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  margin-left: var(--spacing-md);
+}
+
 /* Product list (browse + my products) */
 .product-list {
   list-style: none;

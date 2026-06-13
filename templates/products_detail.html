@@ -5,6 +5,11 @@
 {% block content %}
   <p><a href="/products" class="link-back">← Back to browse</a></p>
   <h1>{{ product.name }}</h1>
+  {% if product.image_url %}
+    <img class="product-image" src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy" referrerpolicy="no-referrer" />
+  {% else %}
+    <div class="product-image product-image--empty">No image</div>
+  {% endif %}
   <p class="product-price">R{{ "%.2f"|format(product.price_cents / 100) }}</p>
   {% if product.seller %}
     <p class="text-muted">Sold by {{ product.seller.name }}</p>

@@ -27,6 +27,7 @@
       {% for product in products %}
         <li class="product-card">
           <a href="/products/{{ product.id }}">
+            {% if product.image_url %}<img class="product-thumb" src="{{ product.image_url }}" alt="" loading="lazy" referrerpolicy="no-referrer" />{% endif %}
             <strong>{{ product.name }}</strong> — R{{ "%.2f"|format(product.price_cents / 100) }}
             {% if product.seller %}
               <span class="product-meta">by {{ product.seller.name }}</span>

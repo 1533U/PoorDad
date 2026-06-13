@@ -25,6 +25,7 @@ PRODUCT_DESCRIPTION_MAX_LEN = 4000
 PAGE_SIZE = 12
 TAG_MAX_LEN = 30
 MAX_TAGS_PER_PRODUCT = 8
+IMAGE_URL_MAX_LEN = 500
 
 
 def _page_url(page: int, q: str, min_price: str, max_price: str, tag: str) -> str:
@@ -103,6 +104,18 @@ def _validate_product_input(name: str, description: str, price: float) -> str | 
     if price > PRICE_MAX_CAP:
         return "Price is too high."
     return None
+
+
+def _clean_image_url(raw: str) -> tuple[str | None, str | None]:
+    """Validate an optional image URL. Returns (cleaned_url_or_None, error_or_None)."""
+    url = (raw or "").strip()
+    if not url:
+        return None, None
+    if len(url) > IMAGE_URL_MAX_LEN:
+        return None, "Image URL is too long."
+    if not (url.startswith("http://") or url.startswith("https://")):
+        return None, "Image URL must start with http:// or https://."
+    return url, None
 
 
 @router.get("", response_class=HTMLResponse)
@@ -243,12 +256,16 @@ def create_product(
     description: str = Form(...),
     price: float = Form(...),
     tags: str = Form(""),
+    image_url: str = Form(""),
     user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
     error = _validate_product_input(name, description, price)
+    image_url_clean = None
+    if error is None:
+        image_url_clean, error = _clean_image_url(image_url)
     if error is not None:
         return templates.TemplateResponse(
             request=request,
@@ -261,6 +278,7 @@ def create_product(
         name=name.strip(),
         description=description.strip(),
         price_cents=price_cents,
+        image_url=image_url_clean,
         seller_id=user.id,
         tags=_get_or_create_tags(session, _parse_tags(tags)),
     )
