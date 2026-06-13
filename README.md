@@ -10,7 +10,7 @@ PoorDad is a database-centric web app aiming to be a simple marketplace where bu
 
 - Any registered user can buy **and** sell — no separate seller role or onboarding.
 - Browse, search, and filter products; manage your own listings.
-- Session cart → checkout creates an **order record only** (payment arranged offline for now).
+- DB-backed cart for signed-in users (session cart for guests until login/register); checkout creates an **order record only** (payment arranged offline for now).
 - Buyers see order history; sellers see their listings.
 
 ### Non-goals (for now)
@@ -89,13 +89,14 @@ Schema is managed by Alembic (the app does not create tables on startup).
 main.py                 FastAPI app, lifespan, home route, includes all routers
 config.py               Loads .env; exports SECRET_KEY, DATABASE_URL, SQL_ECHO
 database.py             SQLite engine, get_session dependency
-cart_helpers.py          Session-based cart utilities (get/set/count)
+cart_helpers.py          Cart utilities: DB cart for signed-in users, session cart for guests
 .env.example            Example env vars; copy to .env
 alembic/                Migration scripts; env.py uses config + SQLModel.metadata
 models/
   user.py               User model
   product.py            Product model (seller_id -> User, price_cents, tags)
   order.py              Order + OrderItem models (unit_price_cents)
+  cart.py               CartItem model (user_id + product_id + quantity)
   tag.py                Tag + ProductTag link model (many-to-many with Product)
 routers/
   auth.py               Register, login, logout, get_current_user
@@ -122,6 +123,7 @@ tests/
   test_images.py        Images: create with URL, validation, detail render + empty state
   test_validation.py    Auth + product input validation, cart quantity clamping
   test_checkout_flow.py Cart → order checkout flow and login requirement
+  test_cart.py          DB cart persistence and guest session cart
   test_orders.py        Orders list pagination
   test_authorization.py Authorization matrix + negative cases (maps to user stories)
 docs/
@@ -150,6 +152,7 @@ Go through each file at your own pace. This section explains what exists and why
 - **User:** `id`, `email` (unique, indexed), `name`, `password_hash`, `created_at`.
 - **Product:** `id`, `name`, `description`, `price_cents` (ZAR cents as int), `image_url` (optional, validated http/https), `seller_id` -> User, `created_at`. Uses `Relationship()` to load seller and tags.
 - **Order + OrderItem:** Order has `buyer_id` -> User. OrderItem has `order_id`, `product_id`, `quantity`, `unit_price_cents` (cents at time of purchase). One-to-many relationship via `back_populates`.
+- **CartItem:** `user_id` + `product_id` + `quantity`; one row per product per signed-in user. Guests use a session cookie cart until login/register merges it into the DB.
 - **Tag + ProductTag:** `Tag` has a unique, indexed `name` (stored normalized — lowercased and trimmed). `ProductTag` is the many-to-many link table; `Product.tags` loads tags via `link_model`.
 
 ### 4. `routers/auth.py`
@@ -168,7 +171,7 @@ Go through each file at your own pace. This section explains what exists and why
 
 ### 6. `routers/cart.py`
 
-- Cart stored in session cookie (no DB table).
+- Cart stored in the DB for signed-in users; guests use the session cookie until login/register merges items into the DB.
 - View cart, add/remove items, place order (converts cart → Order + OrderItems in DB; payment is offline/out of scope for v1).
 
 ### 7. `routers/orders.py`
@@ -203,36 +206,31 @@ The project is in a strong MVP state and runs end-to-end:
 - Pagination on browse (12 per page) with prev/next links, a result count, and filters preserved across pages.
 - Tags: products carry many-to-many tags (entered comma-separated on create, normalized + deduped); browse filters by tag via clickable chips.
 - Product images: optional `image_url` (validated http/https) with thumbnails on browse, a full image on detail, and a "No image" empty state.
-- Session cart with add/update/remove and quantity clamping.
+- DB-backed cart for signed-in users (survives logout/login); guests keep a session cart until they sign in.
 - Checkout flow (cart → order + order items; no payment gateway) and "My orders" (paginated at 12 per page).
 - Input validation on auth and product creation paths.
 - Authorization enforced: only owners delete their listings; orders are private to the buyer; seller-only pages require sign-in.
 - Alembic migrations managing schema.
 - Behaviour captured as [user stories](docs/user-stories.md), each mapped to tests.
-- Tests for browse, validation, pagination, tags, images, authorization, checkout flow, and orders pagination (37 passing).
+- Tests for browse, validation, pagination, tags, images, authorization, checkout flow, cart persistence, and orders pagination (40 passing).
 
 Latest local test run:
 
 ```bash
 .venv/bin/pytest tests/ -q
-# 37 passed
+# 40 passed
 ```
 
 ## Remaining work (real technical debt)
 
-1. **Cart persistence model**
-   Session cart is acceptable for MVP, but DB-backed carts improve resilience.
-2. **UI polish**
+1. **UI polish**
    Styling framework exists, but responsive/mobile and visual polish need iteration.
 
 > Note: product images use a remote `image_url` (no upload/storage). File uploads remain out of scope for the MVP.
 
 ## Suggested next milestones (small and learnable)
 
-Do these in order to keep scope controlled:
-
-1. **DB-backed cart first**
-   Persist the cart in the database so it survives across sessions/devices.
+1. **UI polish** — responsive layout, mobile nav, and visual refinement in `static/css/app.css`.
 
 ## Scope guardrails (important)
 

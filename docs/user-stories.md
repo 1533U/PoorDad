@@ -66,12 +66,14 @@ _Tests:_ `test_authorization.py::test_guest_redirected_from_seller_pages`,
 ## Cart & checkout
 
 ### CART-1 — Build a cart and check out
-**As** a buyer, **I want** to add to a session cart and place an order **so that** I have an order record.
+**As** a buyer, **I want** to add items to a cart and place an order **so that** I have an order record.
+- Signed-in users get a DB cart that survives logout/login; guests use a session cart merged on register/login.
 - Quantities are clamped to a sane range.
 - Placing an order requires sign-in; an empty cart places nothing.
 - After checkout the cart is cleared.
 
 _Tests:_ `test_validation.py::test_cart_*`,
+`test_cart.py::*`,
 `test_checkout_flow.py::test_place_order_requires_login`,
 `test_checkout_flow.py::test_checkout_flow_places_order_and_clears_cart`,
 `test_authorization.py::test_place_order_with_empty_cart_creates_nothing`.

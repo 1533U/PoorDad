@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
+from models.cart import CartItem  # noqa: F401 — imported so SQLModel registers the table
 from models.order import Order, OrderItem  # noqa: F401 — imported so SQLModel registers tables
 from models.product import Product  # noqa: F401 — imported so SQLModel registers the table
 from models.tag import ProductTag, Tag  # noqa: F401 — imported so SQLModel registers the tables

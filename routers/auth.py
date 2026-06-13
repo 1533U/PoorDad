@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
-from cart_helpers import cart_count
+from cart_helpers import cart_count, merge_session_cart_into_db
 from database import get_session
 from models.user import User
 
@@ -108,6 +108,7 @@ def register(
     session.refresh(user)
 
     request.session["user_id"] = user.id
+    merge_session_cart_into_db(request, session, user.id)
     return RedirectResponse(url="/", status_code=303)
 
 
@@ -148,6 +149,7 @@ def login(
         )
 
     request.session["user_id"] = user.id
+    merge_session_cart_into_db(request, session, user.id)
     return RedirectResponse(url="/", status_code=303)
 
 

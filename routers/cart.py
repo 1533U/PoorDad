@@ -3,7 +3,15 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session
 
-from cart_helpers import cart_count, get_cart, set_cart
+from cart_helpers import (
+    add_cart_item,
+    cart_count,
+    clear_cart,
+    clamp_quantity,
+    get_cart,
+    remove_cart_item,
+    update_cart_item,
+)
 from database import get_session
 from models.order import Order, OrderItem
 from models.product import Product
@@ -13,25 +21,11 @@ from routers.auth import get_current_user
 router = APIRouter(prefix="/cart")
 templates = Jinja2Templates(directory="templates")
 
-MAX_CART_QUANTITY = 99
-
 
 def _base_context(request: Request, user: User | None, **extra: object) -> dict[str, object]:
     context: dict[str, object] = {"user": user, "cart_count": cart_count(request)}
     context.update(extra)
     return context
-
-
-def _clamp_quantity(quantity: int) -> int:
-    try:
-        quantity_int = int(quantity)
-    except (TypeError, ValueError):
-        return 1
-    if quantity_int < 1:
-        return 1
-    if quantity_int > MAX_CART_QUANTITY:
-        return MAX_CART_QUANTITY
-    return quantity_int
 
 
 @router.get("", response_class=HTMLResponse)
@@ -41,7 +35,7 @@ def cart_page(
     user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    cart = get_cart(request)
+    cart = get_cart(request, session, user)
     rows = []
     total_cents = 0
     for entry in cart:
@@ -64,56 +58,39 @@ def add_to_cart(
     request: Request,
     product_id: int,
     quantity: int = Form(1),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    quantity = _clamp_quantity(quantity)
     product = session.get(Product, product_id)
     if product is None:
         return RedirectResponse(url="/products", status_code=303)
-    cart = get_cart(request)
-    found = False
-    for item in cart:
-        if item.get("product_id") == product_id:
-            item["quantity"] = _clamp_quantity(item.get("quantity", 0) + quantity)
-            found = True
-            break
-    if not found:
-        cart.append({"product_id": product_id, "quantity": quantity})
-    set_cart(request, cart)
+    add_cart_item(request, session, user, product_id, quantity)
     return RedirectResponse(url="/cart", status_code=303)
 
 
 @router.post("/update/{product_id}")
-def update_cart_item(
+def update_cart_item_route(
     request: Request,
     product_id: int,
     quantity: int = Form(1),
+    user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    quantity = min(quantity, MAX_CART_QUANTITY)
     product = session.get(Product, product_id)
     if product is None:
         return RedirectResponse(url="/cart", status_code=303)
-    cart = get_cart(request)
-    if quantity <= 0:
-        cart = [i for i in cart if i.get("product_id") != product_id]
-    else:
-        found = False
-        for item in cart:
-            if item.get("product_id") == product_id:
-                item["quantity"] = quantity
-                found = True
-                break
-        if not found:
-            cart.append({"product_id": product_id, "quantity": quantity})
-    set_cart(request, cart)
+    update_cart_item(request, session, user, product_id, quantity)
     return RedirectResponse(url="/cart", status_code=303)
 
 
 @router.post("/remove/{product_id}")
-def remove_from_cart(request: Request, product_id: int):
-    cart = [i for i in get_cart(request) if i.get("product_id") != product_id]
-    set_cart(request, cart)
+def remove_from_cart(
+    request: Request,
+    product_id: int,
+    user: User | None = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    remove_cart_item(request, session, user, product_id)
     return RedirectResponse(url="/cart", status_code=303)
 
 
@@ -125,7 +102,7 @@ def place_order(
 ):
     if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
-    cart = get_cart(request)
+    cart = get_cart(request, session, user)
     if not cart:
         return RedirectResponse(url="/cart", status_code=303)
     order = Order(buyer_id=user.id)
@@ -136,7 +113,7 @@ def place_order(
         product = session.get(Product, entry["product_id"])
         if product is None:
             continue
-        qty = _clamp_quantity(entry.get("quantity", 1))
+        qty = clamp_quantity(entry.get("quantity", 1))
         session.add(
             OrderItem(
                 order_id=order.id,
@@ -146,7 +123,7 @@ def place_order(
             )
         )
     session.commit()
-    set_cart(request, [])
+    clear_cart(request, session, user)
     request.session["flash_message"] = "Order placed. Thank you!"
     request.session["flash_class"] = "success"
     return RedirectResponse(url="/", status_code=303)

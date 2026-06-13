@@ -10,6 +10,7 @@ from alembic import context
 from config import DATABASE_URL
 
 # Import all models so SQLModel.metadata has every table (for autogenerate).
+from models.cart import CartItem  # noqa: F401
 from models.order import Order, OrderItem  # noqa: F401
 from models.product import Product  # noqa: F401
 from models.tag import ProductTag, Tag  # noqa: F401
