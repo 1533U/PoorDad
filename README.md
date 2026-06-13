@@ -225,14 +225,14 @@ Latest local test run:
 ## Remaining work (real technical debt)
 
 1. **UI polish** (bite-sized; theme lives in `static/css/app.css` `:root`)
-   - Done: responsive nav, layout/theme tokens (`--layout-max-width`, `--color-primary-ring`, etc.)
-   - Next: shared `.field` input class (dedupe filter/qty/form styles), product-row mobile tweaks
+   - Done: responsive nav, layout/theme tokens (`--layout-max-width`, `--color-primary-ring`, etc.), shared `.field` input class (one base for forms, filters, and qty)
+   - Next: product-row mobile stacking (cart + my-products rows on narrow screens)
 
 > Note: product images use a remote `image_url` (no upload/storage). File uploads remain out of scope for the MVP.
 
 ## Suggested next milestones (small and learnable)
 
-1. **UI polish (continued)** — shared form field class, then card/row spacing on small screens.
+1. **UI polish (continued)** — product-row stacking on small screens.
 
 ## Scope guardrails (important)
 

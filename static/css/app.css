@@ -164,10 +164,18 @@ h1 {
   font-weight: 600;
 }
 
+.app-form textarea {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+/* Form fields — shared base; .app-form inputs inherit it, modifiers layer on top */
+.field,
 .app-form input[type="text"],
 .app-form input[type="email"],
 .app-form input[type="password"],
 .app-form input[type="number"],
+.app-form input[type="url"],
 .app-form textarea {
   padding: var(--spacing-sm) var(--spacing-md);
   border: var(--border);
@@ -178,6 +186,7 @@ h1 {
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
+.field:focus,
 .app-form input:focus,
 .app-form textarea:focus {
   outline: none;
@@ -185,9 +194,8 @@ h1 {
   box-shadow: 0 0 0 3px var(--color-primary-ring);
 }
 
-.app-form textarea {
-  resize: vertical;
-  min-height: 6rem;
+.field--sm {
+  font-size: var(--font-size-sm);
 }
 
 /* Buttons */
@@ -280,19 +288,9 @@ h1 {
   flex: 1 1 12rem;
   min-width: 10rem;
   max-width: 20rem;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm);
-  border: var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
 }
 .product-filters--compact .product-filters__price {
   width: 5rem;
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-size: var(--font-size-sm);
-  border: var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
 }
 .product-filters--compact .product-filters__price::placeholder {
   color: var(--color-text-muted);
@@ -461,12 +459,6 @@ a.tag-chip:hover {
 
 .input-qty {
   width: 4rem;
-  padding: 0.35rem var(--spacing-sm);
-  margin-right: var(--spacing-sm);
-  border: var(--border);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  font-family: inherit;
 }
 
 .form-inline {
