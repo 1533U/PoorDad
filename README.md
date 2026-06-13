@@ -98,7 +98,7 @@ models/
   order.py              Order + OrderItem models (unit_price_cents)
 routers/
   auth.py               Register, login, logout, get_current_user
-  products.py           Browse (search + price filter), my products, new, detail, delete
+  products.py           Browse (search + price filter + pagination), my products, new, detail, delete
   cart.py               Cart page, add/remove items, place order
   orders.py             My orders page
 templates/
@@ -150,7 +150,7 @@ Go through each file at your own pace. This section explains what exists and why
 
 ### 5. `routers/products.py`
 
-- **Browse (GET `/products`):** search by name/description (`q`), filter by `min_price`/`max_price` (rand, converted to cents). Validates min <= max.
+- **Browse (GET `/products`):** search by name/description (`q`), filter by `min_price`/`max_price` (rand, converted to cents). Validates min <= max. Paginated at 12 per page (`page` query param) with prev/next links that preserve active filters.
 - **My products (GET `/products/my`):** seller's own products.
 - **New product (GET/POST `/products/new`):** form; price entered in rand, stored as cents.
 - **Detail (GET `/products/{id}`):** full view, "Add to cart", "Delete" if owner.
@@ -190,27 +190,28 @@ The project is in a strong MVP state and runs end-to-end:
 - User registration/login/logout with session auth.
 - Product browse/create/detail/delete.
 - Search + min/max price filtering on browse.
+- Pagination on browse (12 per page) with prev/next links, a result count, and filters preserved across pages.
 - Session cart with add/update/remove and quantity clamping.
 - Checkout flow (cart → order + order items; no payment gateway) and "My orders".
 - Input validation on auth and product creation paths.
 - Alembic migrations managing schema.
-- Tests for browse, validation, and checkout flow (13 passing).
+- Tests for browse, validation, pagination, and checkout flow (16 passing).
 
 Latest local test run:
 
 ```bash
 .venv/bin/pytest tests/ -q
-# 13 passed
+# 16 passed
 ```
 
 ## Remaining work (real technical debt)
 
-1. **Pagination**
-   Browse and orders pages still load full result sets.
-2. **Tagging/filter UX**
+1. **Tagging/filter UX**
    No tag/category model yet.
-3. **Image URL UX**
+2. **Image URL UX**
    `image_url` exists on Product, but needs validation, thumbnail rendering, and empty-state handling (uploads/storage deferred).
+3. **Orders pagination**
+   Browse is paginated; the orders page still loads the full result set.
 4. **Cart persistence model**
    Session cart is acceptable for MVP, but DB-backed carts improve resilience.
 5. **Authorization and edge cases**
@@ -224,13 +225,11 @@ Latest local test run:
 
 Do these in order to keep scope controlled:
 
-1. **Pagination first**  
-   Add `page` + `page_size` on browse (then orders). This teaches query shaping and UI state.
-2. **Tag model second**  
+1. **Tag model first**  
    Add `Tag` and product-tag link table, then filter by tag in browse.
-3. **Image URL UX third**  
+2. **Image URL UX second**  
    Validate existing `image_url` field, render thumbnails, handle missing images.
-4. **Authorization/test pass fourth**  
+3. **Authorization/test pass third**  
    Add focused tests for "who can do what" and invalid input scenarios.
 
 ## Scope guardrails (important)

@@ -17,7 +17,7 @@
     <p class="flash error">{{ error }}</p>
   {% endif %}
   <section class="browse-results" aria-label="Results">
-    <h2 class="browse-results__title">{% if products %}{{ products|length }} product{{ 's' if products|length != 1 else '' }}{% else %}No products{% endif %}</h2>
+    <h2 class="browse-results__title">{% if total %}{{ total }} product{{ 's' if total != 1 else '' }}{% else %}No products{% endif %}</h2>
   {% if products %}
     <ul class="product-list">
       {% for product in products %}
@@ -32,6 +32,13 @@
         </li>
       {% endfor %}
     </ul>
+    {% if total_pages > 1 %}
+      <nav class="pagination" aria-label="Pagination">
+        {% if prev_url %}<a href="{{ prev_url }}" class="btn btn-sm">← Prev</a>{% endif %}
+        <span class="pagination__status">Page {{ page }} of {{ total_pages }}</span>
+        {% if next_url %}<a href="{{ next_url }}" class="btn btn-sm">Next →</a>{% endif %}
+      </nav>
+    {% endif %}
   {% else %}
     <p class="text-muted">No products match. Try different search or filters.</p>
   {% endif %}

@@ -1,7 +1,10 @@
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException
+from sqlalchemy import func
 from sqlmodel import Session, select
 from sqlmodel import or_
 
@@ -18,6 +21,19 @@ SEARCH_QUERY_MAX_LEN = 200
 PRICE_MAX_CAP = 100_000_000.0  # R100m in rand
 PRODUCT_NAME_MAX_LEN = 120
 PRODUCT_DESCRIPTION_MAX_LEN = 4000
+PAGE_SIZE = 12
+
+
+def _page_url(page: int, q: str, min_price: str, max_price: str) -> str:
+    """Build a /products URL for the given page, preserving active filters."""
+    params: dict[str, object] = {"page": page}
+    if q:
+        params["q"] = q
+    if min_price:
+        params["min_price"] = min_price
+    if max_price:
+        params["max_price"] = max_price
+    return "/products?" + urlencode(params)
 
 
 def _base_context(request: Request, user: User | None, **extra: object) -> dict[str, object]:
@@ -67,6 +83,7 @@ def browse_products(
     q: str | None = Query(None, max_length=SEARCH_QUERY_MAX_LEN),
     min_price: str | None = Query(None),
     max_price: str | None = Query(None),
+    page: int = Query(1, ge=1),
 ):
     q_clean = (q or "").strip()
     min_p = _parse_price(min_price)
@@ -84,24 +101,39 @@ def browse_products(
                 min_price=min_price or "",
                 max_price=max_price or "",
                 error="Min price cannot be greater than max price.",
+                total=0,
+                page=1,
+                total_pages=1,
+                prev_url=None,
+                next_url=None,
             ),
-        )
-    query = select(Product).order_by(Product.created_at.desc())
-    if q_clean:
-        term = f"%{q_clean}%"
-        query = query.where(
-            or_(
-                Product.name.ilike(term),
-                Product.description.ilike(term),
-            )
         )
     min_cents = int(min_p * 100) if min_p is not None else None
     max_cents = int(max_p * 100) if max_p is not None else None
+
+    filters = []
+    if q_clean:
+        term = f"%{q_clean}%"
+        filters.append(or_(Product.name.ilike(term), Product.description.ilike(term)))
     if min_cents is not None:
-        query = query.where(Product.price_cents >= min_cents)
+        filters.append(Product.price_cents >= min_cents)
     if max_cents is not None:
-        query = query.where(Product.price_cents <= max_cents)
+        filters.append(Product.price_cents <= max_cents)
+
+    count_query = select(func.count()).select_from(Product)
+    for condition in filters:
+        count_query = count_query.where(condition)
+    total = session.exec(count_query).one()
+
+    total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
+    page = min(page, total_pages)
+
+    query = select(Product)
+    for condition in filters:
+        query = query.where(condition)
+    query = query.order_by(Product.created_at.desc()).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)
     products = session.exec(query).all()
+
     return templates.TemplateResponse(
         request=request,
         name="products_browse.html",
@@ -113,6 +145,11 @@ def browse_products(
             min_price=min_price or "",
             max_price=max_price or "",
             error=None,
+            total=total,
+            page=page,
+            total_pages=total_pages,
+            prev_url=_page_url(page - 1, q_clean, min_price or "", max_price or "") if page > 1 else None,
+            next_url=_page_url(page + 1, q_clean, min_price or "", max_price or "") if page < total_pages else None,
         ),
     )
 
