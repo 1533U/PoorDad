@@ -8,6 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from models.order import Order, OrderItem  # noqa: F401 — imported so SQLModel registers tables
 from models.product import Product  # noqa: F401 — imported so SQLModel registers the table
+from models.tag import ProductTag, Tag  # noqa: F401 — imported so SQLModel registers the tables
 from models.user import User  # noqa: F401 — imported so SQLModel registers the table
 from cart_helpers import cart_count
 from config import SECRET_KEY

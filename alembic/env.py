@@ -12,6 +12,7 @@ from config import DATABASE_URL
 # Import all models so SQLModel.metadata has every table (for autogenerate).
 from models.order import Order, OrderItem  # noqa: F401
 from models.product import Product  # noqa: F401
+from models.tag import ProductTag, Tag  # noqa: F401
 from models.user import User  # noqa: F401
 
 # this is the Alembic Config object, which provides

@@ -291,6 +291,32 @@ h1 {
   color: var(--color-text-muted);
 }
 
+/* Tags */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+.tag-chip {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+a.tag-chip:hover {
+  color: var(--color-text);
+}
+.tag-active {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-md);
+}
+
 /* Product list (browse + my products) */
 .product-list {
   list-style: none;

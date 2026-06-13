@@ -11,6 +11,7 @@ from sqlmodel import or_
 from cart_helpers import cart_count
 from database import get_session
 from models.product import Product
+from models.tag import ProductTag, Tag
 from models.user import User
 from routers.auth import get_current_user
 
@@ -22,9 +23,11 @@ PRICE_MAX_CAP = 100_000_000.0  # R100m in rand
 PRODUCT_NAME_MAX_LEN = 120
 PRODUCT_DESCRIPTION_MAX_LEN = 4000
 PAGE_SIZE = 12
+TAG_MAX_LEN = 30
+MAX_TAGS_PER_PRODUCT = 8
 
 
-def _page_url(page: int, q: str, min_price: str, max_price: str) -> str:
+def _page_url(page: int, q: str, min_price: str, max_price: str, tag: str) -> str:
     """Build a /products URL for the given page, preserving active filters."""
     params: dict[str, object] = {"page": page}
     if q:
@@ -33,7 +36,35 @@ def _page_url(page: int, q: str, min_price: str, max_price: str) -> str:
         params["min_price"] = min_price
     if max_price:
         params["max_price"] = max_price
+    if tag:
+        params["tag"] = tag
     return "/products?" + urlencode(params)
+
+
+def _parse_tags(raw: str | None) -> list[str]:
+    """Split a comma-separated string into normalized, deduped tag names."""
+    if not raw:
+        return []
+    names: list[str] = []
+    for part in raw.split(","):
+        name = part.strip().lower()
+        if name and len(name) <= TAG_MAX_LEN and name not in names:
+            names.append(name)
+        if len(names) >= MAX_TAGS_PER_PRODUCT:
+            break
+    return names
+
+
+def _get_or_create_tags(session: Session, names: list[str]) -> list[Tag]:
+    tags: list[Tag] = []
+    for name in names:
+        tag = session.exec(select(Tag).where(Tag.name == name)).first()
+        if tag is None:
+            tag = Tag(name=name)
+            session.add(tag)
+            session.flush()
+        tags.append(tag)
+    return tags
 
 
 def _base_context(request: Request, user: User | None, **extra: object) -> dict[str, object]:
@@ -83,9 +114,11 @@ def browse_products(
     q: str | None = Query(None, max_length=SEARCH_QUERY_MAX_LEN),
     min_price: str | None = Query(None),
     max_price: str | None = Query(None),
+    tag: str | None = Query(None, max_length=TAG_MAX_LEN),
     page: int = Query(1, ge=1),
 ):
     q_clean = (q or "").strip()
+    tag_clean = (tag or "").strip().lower()
     min_p = _parse_price(min_price)
     max_p = _parse_price(max_price)
     if min_p is not None and max_p is not None and min_p > max_p:
@@ -100,6 +133,7 @@ def browse_products(
                 search_query=q_clean,
                 min_price=min_price or "",
                 max_price=max_price or "",
+                tag=tag_clean,
                 error="Min price cannot be greater than max price.",
                 total=0,
                 page=1,
@@ -111,27 +145,28 @@ def browse_products(
     min_cents = int(min_p * 100) if min_p is not None else None
     max_cents = int(max_p * 100) if max_p is not None else None
 
-    filters = []
-    if q_clean:
-        term = f"%{q_clean}%"
-        filters.append(or_(Product.name.ilike(term), Product.description.ilike(term)))
-    if min_cents is not None:
-        filters.append(Product.price_cents >= min_cents)
-    if max_cents is not None:
-        filters.append(Product.price_cents <= max_cents)
+    def apply_filters(stmt):
+        if tag_clean:
+            stmt = stmt.join(ProductTag, ProductTag.product_id == Product.id).join(
+                Tag, Tag.id == ProductTag.tag_id
+            ).where(Tag.name == tag_clean)
+        if q_clean:
+            term = f"%{q_clean}%"
+            stmt = stmt.where(or_(Product.name.ilike(term), Product.description.ilike(term)))
+        if min_cents is not None:
+            stmt = stmt.where(Product.price_cents >= min_cents)
+        if max_cents is not None:
+            stmt = stmt.where(Product.price_cents <= max_cents)
+        return stmt
 
-    count_query = select(func.count()).select_from(Product)
-    for condition in filters:
-        count_query = count_query.where(condition)
-    total = session.exec(count_query).one()
+    total = session.exec(apply_filters(select(func.count(func.distinct(Product.id))).select_from(Product))).one()
 
     total_pages = max(1, (total + PAGE_SIZE - 1) // PAGE_SIZE)
     page = min(page, total_pages)
 
-    query = select(Product)
-    for condition in filters:
-        query = query.where(condition)
-    query = query.order_by(Product.created_at.desc()).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)
+    query = apply_filters(select(Product)).order_by(Product.created_at.desc()).limit(PAGE_SIZE).offset(
+        (page - 1) * PAGE_SIZE
+    )
     products = session.exec(query).all()
 
     return templates.TemplateResponse(
@@ -144,12 +179,13 @@ def browse_products(
             search_query=q_clean,
             min_price=min_price or "",
             max_price=max_price or "",
+            tag=tag_clean,
             error=None,
             total=total,
             page=page,
             total_pages=total_pages,
-            prev_url=_page_url(page - 1, q_clean, min_price or "", max_price or "") if page > 1 else None,
-            next_url=_page_url(page + 1, q_clean, min_price or "", max_price or "") if page < total_pages else None,
+            prev_url=_page_url(page - 1, q_clean, min_price or "", max_price or "", tag_clean) if page > 1 else None,
+            next_url=_page_url(page + 1, q_clean, min_price or "", max_price or "", tag_clean) if page < total_pages else None,
         ),
     )
 
@@ -206,6 +242,7 @@ def create_product(
     name: str = Form(...),
     description: str = Form(...),
     price: float = Form(...),
+    tags: str = Form(""),
     user: User | None = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
@@ -225,6 +262,7 @@ def create_product(
         description=description.strip(),
         price_cents=price_cents,
         seller_id=user.id,
+        tags=_get_or_create_tags(session, _parse_tags(tags)),
     )
     session.add(product)
     session.commit()

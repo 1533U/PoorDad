@@ -94,11 +94,12 @@ cart_helpers.py          Session-based cart utilities (get/set/count)
 alembic/                Migration scripts; env.py uses config + SQLModel.metadata
 models/
   user.py               User model
-  product.py            Product model (seller_id -> User, price_cents)
+  product.py            Product model (seller_id -> User, price_cents, tags)
   order.py              Order + OrderItem models (unit_price_cents)
+  tag.py                Tag + ProductTag link model (many-to-many with Product)
 routers/
   auth.py               Register, login, logout, get_current_user
-  products.py           Browse (search + price filter + pagination), my products, new, detail, delete
+  products.py           Browse (search + price + tag filter + pagination), my products, new (with tags), detail, delete
   cart.py               Cart page, add/remove items, place order
   orders.py             My orders page
 templates/
@@ -116,7 +117,10 @@ static/
   css/app.css           All styles (CSS variables + component classes)
 tests/
   conftest.py           Pytest fixtures: test DB, client, session
-  test_browse.py        Browse: search (q), price filter, validation (6 tests)
+  test_browse.py        Browse: search (q), price filter, validation, pagination
+  test_tags.py          Tags: create/normalize, browse tag filter, detail display
+  test_validation.py    Auth + product input validation, cart quantity clamping
+  test_checkout_flow.py Cart → order checkout flow and login requirement
 requirements.txt        Python dependencies
 ```
 
@@ -141,6 +145,7 @@ Go through each file at your own pace. This section explains what exists and why
 - **User:** `id`, `email` (unique, indexed), `name`, `password_hash`, `created_at`.
 - **Product:** `id`, `name`, `description`, `price_cents` (ZAR cents as int), `image_url`, `seller_id` -> User, `created_at`. Uses `Relationship()` to load seller. `image_url` is an **intentional inert placeholder** — the column exists, but there is no upload/render UI yet (see Remaining work).
 - **Order + OrderItem:** Order has `buyer_id` -> User. OrderItem has `order_id`, `product_id`, `quantity`, `unit_price_cents` (cents at time of purchase). One-to-many relationship via `back_populates`.
+- **Tag + ProductTag:** `Tag` has a unique, indexed `name` (stored normalized — lowercased and trimmed). `ProductTag` is the many-to-many link table; `Product.tags` loads tags via `link_model`.
 
 ### 4. `routers/auth.py`
 
@@ -150,7 +155,7 @@ Go through each file at your own pace. This section explains what exists and why
 
 ### 5. `routers/products.py`
 
-- **Browse (GET `/products`):** search by name/description (`q`), filter by `min_price`/`max_price` (rand, converted to cents). Validates min <= max. Paginated at 12 per page (`page` query param) with prev/next links that preserve active filters.
+- **Browse (GET `/products`):** search by name/description (`q`), filter by `min_price`/`max_price` (rand, converted to cents) and by `tag`. Validates min <= max. Paginated at 12 per page (`page` query param) with prev/next links that preserve active filters.
 - **My products (GET `/products/my`):** seller's own products.
 - **New product (GET/POST `/products/new`):** form; price entered in rand, stored as cents.
 - **Detail (GET `/products/{id}`):** full view, "Add to cart", "Delete" if owner.
@@ -191,45 +196,42 @@ The project is in a strong MVP state and runs end-to-end:
 - Product browse/create/detail/delete.
 - Search + min/max price filtering on browse.
 - Pagination on browse (12 per page) with prev/next links, a result count, and filters preserved across pages.
+- Tags: products carry many-to-many tags (entered comma-separated on create, normalized + deduped); browse filters by tag via clickable chips.
 - Session cart with add/update/remove and quantity clamping.
 - Checkout flow (cart → order + order items; no payment gateway) and "My orders".
 - Input validation on auth and product creation paths.
 - Alembic migrations managing schema.
-- Tests for browse, validation, pagination, and checkout flow (16 passing).
+- Tests for browse, validation, pagination, tags, and checkout flow (20 passing).
 
 Latest local test run:
 
 ```bash
 .venv/bin/pytest tests/ -q
-# 16 passed
+# 20 passed
 ```
 
 ## Remaining work (real technical debt)
 
-1. **Tagging/filter UX**
-   No tag/category model yet.
-2. **Image URL UX**
+1. **Image URL UX**
    `image_url` exists on Product, but needs validation, thumbnail rendering, and empty-state handling (uploads/storage deferred).
-3. **Orders pagination**
+2. **Orders pagination**
    Browse is paginated; the orders page still loads the full result set.
-4. **Cart persistence model**
+3. **Cart persistence model**
    Session cart is acceptable for MVP, but DB-backed carts improve resilience.
-5. **Authorization and edge cases**
+4. **Authorization and edge cases**
    Continue tightening route-level checks and user-facing error paths.
-6. **Test depth**
+5. **Test depth**
    Good start, but still light on negative cases and authorization matrix tests.
-7. **UI polish**
+6. **UI polish**
    Styling framework exists, but responsive/mobile and visual polish need iteration.
 
 ## Suggested next milestones (small and learnable)
 
 Do these in order to keep scope controlled:
 
-1. **Tag model first**  
-   Add `Tag` and product-tag link table, then filter by tag in browse.
-2. **Image URL UX second**  
+1. **Image URL UX first**  
    Validate existing `image_url` field, render thumbnails, handle missing images.
-3. **Authorization/test pass third**  
+2. **Authorization/test pass second**  
    Add focused tests for "who can do what" and invalid input scenarios.
 
 ## Scope guardrails (important)

@@ -11,8 +11,12 @@
     <input type="number" id="min_price" name="min_price" value="{{ min_price }}" min="0" step="0.01" placeholder="Min R" class="product-filters__price" />
     <label for="max_price" class="sr-only">Max price (R)</label>
     <input type="number" id="max_price" name="max_price" value="{{ max_price }}" min="0" step="0.01" placeholder="Max R" class="product-filters__price" />
+    {% if tag %}<input type="hidden" name="tag" value="{{ tag }}" />{% endif %}
     <button type="submit" class="btn btn-sm">Search</button>
   </form>
+  {% if tag %}
+    <p class="tag-active">Tag: <span class="tag-chip">{{ tag }}</span> <a href="/products" class="link-clear">clear</a></p>
+  {% endif %}
   {% if error %}
     <p class="flash error">{{ error }}</p>
   {% endif %}
@@ -29,6 +33,11 @@
             {% endif %}
             <br><span class="product-meta">{{ product.description[:80] }}{% if product.description|length > 80 %}…{% endif %}</span>
           </a>
+          {% if product.tags %}
+            <div class="tag-list">
+              {% for t in product.tags %}<a href="/products?tag={{ t.name }}" class="tag-chip">{{ t.name }}</a>{% endfor %}
+            </div>
+          {% endif %}
         </li>
       {% endfor %}
     </ul>

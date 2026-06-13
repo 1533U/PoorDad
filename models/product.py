@@ -3,6 +3,7 @@ from typing import Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
+from models.tag import ProductTag, Tag
 from models.user import User
 
 
@@ -16,4 +17,5 @@ class Product(SQLModel, table=True):
     image_url: Optional[str] = Field(default=None)
     seller_id: int = Field(foreign_key="user.id")
     seller: Optional[User] = Relationship()
+    tags: list[Tag] = Relationship(back_populates="products", link_model=ProductTag)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
