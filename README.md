@@ -101,7 +101,7 @@ routers/
   auth.py               Register, login, logout, get_current_user
   products.py           Browse (search + price + tag filter + pagination), my products, new (with tags), detail, delete
   cart.py               Cart page, add/remove items, place order
-  orders.py             My orders page
+  orders.py             My orders page (paginated)
 templates/
   base.html             Layout, nav, HTMX script
   home.html             Landing page
@@ -112,7 +112,7 @@ templates/
   products_new.html     Add product form
   products_detail.html  Single product, add to cart, delete if owner
   cart.html             Shopping cart with totals and place-order button
-  orders_my.html        Placed orders with items and totals
+  orders_my.html        Placed orders with items, totals, and pagination
 static/
   css/app.css           All styles (CSS variables + component classes)
 tests/
@@ -122,6 +122,7 @@ tests/
   test_images.py        Images: create with URL, validation, detail render + empty state
   test_validation.py    Auth + product input validation, cart quantity clamping
   test_checkout_flow.py Cart → order checkout flow and login requirement
+  test_orders.py        Orders list pagination
   test_authorization.py Authorization matrix + negative cases (maps to user stories)
 docs/
   user-stories.md       User stories + acceptance criteria, mapped to tests
@@ -172,7 +173,7 @@ Go through each file at your own pace. This section explains what exists and why
 
 ### 7. `routers/orders.py`
 
-- My orders: lists logged-in user's orders with items and totals.
+- My orders: lists logged-in user's orders with items and totals. Paginated at 12 per page (`page` query param) with prev/next links and a result count.
 
 ### 8. Templates
 
@@ -203,27 +204,25 @@ The project is in a strong MVP state and runs end-to-end:
 - Tags: products carry many-to-many tags (entered comma-separated on create, normalized + deduped); browse filters by tag via clickable chips.
 - Product images: optional `image_url` (validated http/https) with thumbnails on browse, a full image on detail, and a "No image" empty state.
 - Session cart with add/update/remove and quantity clamping.
-- Checkout flow (cart → order + order items; no payment gateway) and "My orders".
+- Checkout flow (cart → order + order items; no payment gateway) and "My orders" (paginated at 12 per page).
 - Input validation on auth and product creation paths.
 - Authorization enforced: only owners delete their listings; orders are private to the buyer; seller-only pages require sign-in.
 - Alembic migrations managing schema.
 - Behaviour captured as [user stories](docs/user-stories.md), each mapped to tests.
-- Tests for browse, validation, pagination, tags, images, authorization, and checkout flow (35 passing).
+- Tests for browse, validation, pagination, tags, images, authorization, checkout flow, and orders pagination (37 passing).
 
 Latest local test run:
 
 ```bash
 .venv/bin/pytest tests/ -q
-# 35 passed
+# 37 passed
 ```
 
 ## Remaining work (real technical debt)
 
-1. **Orders pagination**
-   Browse is paginated; the orders page still loads the full result set.
-2. **Cart persistence model**
+1. **Cart persistence model**
    Session cart is acceptable for MVP, but DB-backed carts improve resilience.
-3. **UI polish**
+2. **UI polish**
    Styling framework exists, but responsive/mobile and visual polish need iteration.
 
 > Note: product images use a remote `image_url` (no upload/storage). File uploads remain out of scope for the MVP.
@@ -232,9 +231,7 @@ Latest local test run:
 
 Do these in order to keep scope controlled:
 
-1. **Orders pagination first**  
-   Apply the same `page` pattern from browse to the orders list.
-2. **DB-backed cart second**  
+1. **DB-backed cart first**
    Persist the cart in the database so it survives across sessions/devices.
 
 ## Scope guardrails (important)

@@ -4,6 +4,8 @@
 
 {% block content %}
   <h1>My orders</h1>
+  <section class="browse-results" aria-label="Orders">
+    <h2 class="browse-results__title">{% if total %}{{ total }} order{{ 's' if total != 1 else '' }}{% else %}No orders{% endif %}</h2>
   {% if order_totals %}
     <ul class="product-list">
       {% for ot in order_totals %}
@@ -22,7 +24,15 @@
         </li>
       {% endfor %}
     </ul>
+    {% if total_pages > 1 %}
+      <nav class="pagination" aria-label="Pagination">
+        {% if prev_url %}<a href="{{ prev_url }}" class="btn btn-sm">← Prev</a>{% endif %}
+        <span class="pagination__status">Page {{ page }} of {{ total_pages }}</span>
+        {% if next_url %}<a href="{{ next_url }}" class="btn btn-sm">Next →</a>{% endif %}
+      </nav>
+    {% endif %}
   {% else %}
     <p>You have no orders yet. <a href="/products">Browse products</a> and add to cart to place an order.</p>
   {% endif %}
+  </section>
 {% endblock %}
